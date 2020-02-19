@@ -29,6 +29,7 @@ def ml(lat,lon,df,para):
   p = '{:02.4f}'.format(metrics.precision_score(Y_test, Y_pred, average='macro'))
   r = '{:02.4f}'.format(metrics.recall_score(Y_test, Y_pred, average='macro'))
   f1 = '{:02.4f}'.format(metrics.f1_score(Y_test, Y_pred, average='macro'))
+  print(lat)
   result = model.predict([float(lat), float(lon)])
   performance = 'ACC:'+str(acc)+'; Precision:'+str(p)+'; Recall:'+ str(r)+'; F1-score:'+ str(f1)
   return [result[0], performance]
@@ -54,68 +55,6 @@ def rs(input, output, radius):
       if distance < radius: #searching radius in miles
         issr[i]=issr[i]+'/'+isss[ii]
   df1 = DataFrame(issr, columns= ['issue_question_r'])
-  df = df.merge(df1, left_index = True, right_index = True)
-  export_csv = df.to_csv (output, index = None, header=True)
-
-def getissue(lat, lon, topic):
-
-  ## ====== radius searching =====
-  # rs("company_topics_issues_topic0.csv", "company_topics_issues_text_topic0.csv", 10)
-
-  ## ====== read data ======
-  if (topic == 'Topic0'): df = pd.read_csv("company_topics_issues_text_topic0.csv") 
-  issr = df['issue_question_r'].astype(str)
-  size = len(issr)
-  issr1 = np.zeros(size)
-
-  ## ====== most common words ======
-  # word=' '.join(list(issr))
-  # allWords = nltk.tokenize.word_tokenize(word)
-  # stopwords = nltk.corpus.stopwords.words('english')
-  # allWordExceptStopDist = nltk.FreqDist(w.lower() for w in allWords if w not in stopwords)    
-  # mostCommon= allWordExceptStopDist.most_common(100)
-  # print(mostCommon)
-
-  ## ====== find No. 1 issue ======
-  for i in range(0,size):
-    if (topic == 'Topic0'): 
-      issr1a = issr[i].count('worda0') + issr[i].count('worda1') + issr[i].count('worda2') + issr[i].count('worda3')
-      issr1b = issr[i].count('wordb0') + issr[i].count('wordb1') + issr[i].count('wordb2')
-      issr1c = issr[i].count('wordc0') + issr[i].count('wordc1') + issr[i].count('wordc2')
-      issr1d = issr[i].count('wordd0') + issr[i].count('wordd1') + issr[i].count('wordd2') + issr[i].count('wordd3')
-      issr1[i] = np.flip(np.argsort([issr1a,issr1b,issr1c,issr1d]))[0]
-
-  ## ====== fit the data ======
-  result_issue = ml(lat, lon, df, issr1)
-  # print(result_issue[1])
-
-  ## ====== outputs ======
-  if (topic == 'Topic0'): 
-    if (result_issue[0] == 0): issueo = 'issue0'
-    if (result_issue[0] == 1): issueo = 'issue1'
-    if (result_issue[0] == 2): issueo = 'issue2'
-    if (result_issue[0] == 3): issueo = 'issue3'
-
-  # ## ====== heat map ======
-  # coord = list(zip(df['latitude'].tolist(), df['longitude'].tolist()))
-  # lat = request.args.get('lat')
-  # lon = request.args.get('lon')
-  # m = folium.Map([float(lat), float(lon)], zoom_start = 14, max_zoom = 16)
-  # m.add_child(plugins.HeatMap(coord, radius = 15))
-  # m.save('flaskexample/templates/map.html')
-
-  return issueo
-
-def getmap(input, output):
-  df = pd.read_csv(input)
-  lat00 = df['latitude']
-  lon00 = df['longitude']
-  top00 = df['topic'].astype(str)
-  size = len(lat00)
-  issm = ['']*size
-  for i in range(0,size):
-    issm[i] = getissue(lat00[i], lon00[i], top00[i])
-  df1 = DataFrame(issm, columns= ['issm'])
   df = df.merge(df1, left_index = True, right_index = True)
   export_csv = df.to_csv (output, index = None, header=True)
 
@@ -162,36 +101,59 @@ def map():
 ## read output page
 @app.route('/output')
 def cesareans_output():
-
-  ## ====== create heat maps ======
-
-  # getmap("company_topics_issues_text_topic0.csv", "company_topics_issues_text_map_topic0.csv")
-
   ## ====== inputs ======
   lat = request.args.get('lat')
   lon = request.args.get('lon')
   topic = request.args.get('topic')
 
- ## ====== outputs ======
-  issueo = getissue(lat, lon, topic)
+  ## ====== radius searching =====
+  # rs("company_topics_issues_topic0.csv", "company_topics_issues_text_topic0.csv", 10)
+
+  ## ====== read data ======
+  if (topic == 'Topic0'): df = pd.read_csv("company_topics_issues_text_topic0.csv") 
+  issr = df['issue_question_r'].astype(str)
+  size = len(issr)
+  issr1 = np.zeros(size)
+
+  ## ====== most common words ======
+  # word=' '.join(list(issr))
+  # allWords = nltk.tokenize.word_tokenize(word)
+  # stopwords = nltk.corpus.stopwords.words('english')
+  # allWordExceptStopDist = nltk.FreqDist(w.lower() for w in allWords if w not in stopwords)    
+  # mostCommon= allWordExceptStopDist.most_common(100)
+  # print(mostCommon)
+
+  ## ====== find No. 1 issue ======
+  for i in range(0,size):
+    if (topic == 'Topic0'): 
+      issr1a = issr[i].count('worda0') + issr[i].count('worda1') + issr[i].count('worda2') + issr[i].count('worda3')
+      issr1b = issr[i].count('wordb0') + issr[i].count('wordb1') + issr[i].count('wordb2')
+      issr1c = issr[i].count('wordc0') + issr[i].count('wordc1') + issr[i].count('wordc2')
+      issr1d = issr[i].count('wordd0') + issr[i].count('wordd1') + issr[i].count('wordd2') + issr[i].count('wordd3')
+      issr1[i] = np.flip(np.argsort([issr1a,issr1b,issr1c,issr1d]))[0]
+
+  ## ====== fit the data ======
+  result_issue = ml(lat, lon, df, issr1)
+  # print(result_issue[1])
+
+  ## ====== outputs ======
+  if (topic == 'Topic0'): 
+    if (result_issue[0] == 0): issueo = 'issue0'
+    if (result_issue[0] == 1): issueo = 'issue1'
+    if (result_issue[0] == 2): issueo = 'issue2'
+    if (result_issue[0] == 3): issueo = 'issue3'
+
   the_result_1 = 'main issue: ' + issueo
   the_result_2 = topic + ' @ ('+ lat + ',' + lon +')'
 
   ## ====== heat map ======
-
-  if (topic == 'Topic0'): dfm = pd.read_csv("company_topics_issues_text_map_topic0.csv")
-
-  issm =  dfm['issm']
-  latm0 = dfm['latitude']
-  lonm0 = dfm['longitude']
-  indi = np.where (issm == issueo)
-  latm = [latm0[i] for i in indi][0]
-  lonm = [lonm0[i] for i in indi][0]
-  coord = list(zip(latm.tolist(), lonm.tolist()))
+  coord = list(zip(df['latitude'].tolist(), df['longitude'].tolist()))
   lat = request.args.get('lat')
   lon = request.args.get('lon')
-  m = folium.Map([float(lat), float(lon)], zoom_start = 14, max_zoom = 16)
+  m = folium.Map([float(lat), float(lon)], zoom_start = 14, max_zoom = 15)
   m.add_child(plugins.HeatMap(coord, radius = 15))
   m.save('flaskexample/templates/map.html')
 
+  ## ====== return to the output page ======
   return render_template("output.html", the_result_1 = the_result_1, the_result_2 = the_result_2)
+
